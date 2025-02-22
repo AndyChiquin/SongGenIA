@@ -1,6 +1,7 @@
 from Login_Register.database import db
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -21,3 +22,13 @@ class User(db.Model):
             'email': self.email,
             'username': self.username
         }
+
+    def check_password(self, password):
+        """Método para verificar la contraseña (deberías usar bcrypt para encriptar y verificar)"""
+        from passlib.hash import bcrypt
+        return bcrypt.verify(password, self.password)
+
+    def set_password(self, password):
+        """Método para encriptar la contraseña"""
+        from passlib.hash import bcrypt
+        self.password = bcrypt.hash(password)

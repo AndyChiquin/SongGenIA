@@ -1,9 +1,9 @@
 import os
 import jwt
-import bcrypt
 from flask import jsonify, request, session, redirect, url_for
 from Login_Register.user import User
 from Login_Register.database import db
+from flask_login import login_user
 
 def register():
     """Registra un nuevo usuario"""
@@ -18,6 +18,10 @@ def register():
     # Verificar que todos los campos estén presentes
     if not all([nombre, cedula, telefono, email, password, username]):
         return jsonify({"msg": "Todos los campos son obligatorios"}), 400
+    
+    # Verificar si el usuario ya existe
+    if User.query.filter_by(email=email).first():
+        return jsonify({"msg": "El correo electrónico ya está registrado"}), 400
     
     # Encriptar contraseña
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -50,7 +54,7 @@ def login():
     user = User.query.filter_by(email=email).first()
     
     # Verificar si existe el usuario y la contraseña es correcta
-    if not user or not user.password or not bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
+    if not user or not user.check_password(password):
         return jsonify({"msg": "Credenciales inválidas"}), 401
     
     # Generar token JWT
@@ -59,6 +63,9 @@ def login():
         os.getenv('SECRET_KEY'),
         algorithm="HS256"
     )
+    
+    # Iniciar sesión en Flask-Login
+    login_user(user)
     
     return jsonify({"token": token, "user": user.to_dict()})
 
@@ -81,6 +88,9 @@ def google_callback(google):
         )
         db.session.add(user)
         db.session.commit()
+    
+    # Iniciar sesión en Flask-Login
+    login_user(user)
     
     # Guardar información del usuario en la sesión
     session['user_id'] = user.id

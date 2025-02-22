@@ -3,11 +3,14 @@ from flask_login import LoginManager
 from authlib.integrations.flask_client import OAuth
 from Login_Register.user import User
 
+
 login_manager = LoginManager()
 oauth = OAuth()
 
 def init_passport(app):
-    """Inicializa la autenticación con Google"""
+    """Inicializa la autenticación con Google y configura flask-login"""
+    
+    # Inicializa el LoginManager y OAuth con la app Flask
     login_manager.init_app(app)
     oauth.init_app(app)
     
@@ -24,10 +27,11 @@ def init_passport(app):
         userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
         client_kwargs={'scope': 'openid email profile'},
     )
-    
+
+    # Configura el cargador de usuarios para Flask-Login
     @login_manager.user_loader
     def load_user(user_id):
-        """Carga un usuario desde la base de datos"""
+        """Carga un usuario desde la base de datos usando su ID"""
         return User.query.get(int(user_id))
     
     return google

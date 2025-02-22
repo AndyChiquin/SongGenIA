@@ -10,7 +10,7 @@ auth_bp.route('/register', methods=['POST'])(register)
 auth_bp.route('/login', methods=['POST'])(login)
 
 def init_oauth_routes(google):
-    """Inicializa las rutas para autenticación con Google"""
+
     
     @auth_bp.route('/google')
     def google_login():
@@ -27,3 +27,5 @@ def init_oauth_routes(google):
         logout_user()
         session.clear()
         return redirect('/')
+
+
