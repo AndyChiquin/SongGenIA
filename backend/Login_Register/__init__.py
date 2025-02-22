@@ -1,9 +1,9 @@
 # app/__init__.py
 from flask import Flask
 from flask_cors import CORS
-from app.config.database import init_db
-from app.config.passport import init_passport
-from app.routes.auth import auth_bp, init_oauth_routes
+from Login_Register.database import db, init_db
+from Login_Register.passport import init_passport
+from Login_Register.auth import auth_bp, init_oauth_routes
 import os
 from flask_session import Session
 from datetime import timedelta
