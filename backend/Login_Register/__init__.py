@@ -19,7 +19,7 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
     # Inicializar extensiones
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
     Session(app)
 
     # Inicializar base de datos

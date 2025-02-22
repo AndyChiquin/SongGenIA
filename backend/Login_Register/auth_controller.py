@@ -5,6 +5,7 @@ from Login_Register.user import User
 from Login_Register.database import db
 from flask_login import login_user
 
+
 def register():
     """Registra un nuevo usuario"""
     data = request.json
@@ -70,29 +71,26 @@ def login():
     return jsonify({"token": token, "user": user.to_dict()})
 
 def google_callback(google):
-    """Callback después de la autenticación con Google"""
-    token = google.authorize_access_token()
-    resp = google.get('userinfo')
-    user_info = resp.json()
-    
-    # Buscar usuario por email o crearlo si no existe
-    user = User.query.filter_by(email=user_info['email']).first()
-    if not user:
-        user = User(
-            nombre=user_info['name'],
-            cedula=None,
-            telefono=None,
-            email=user_info['email'],
-            password=None,
-            username=user_info['name']
-        )
-        db.session.add(user)
-        db.session.commit()
-    
-    # Iniciar sesión en Flask-Login
-    login_user(user)
-    
-    # Guardar información del usuario en la sesión
-    session['user_id'] = user.id
-    
-    return redirect('/dashboard')
+    try:
+        token = google.authorize_access_token()
+        resp = google.get('userinfo')
+        user_info = resp.json()
+
+        user = User.query.filter_by(email=user_info['email']).first()
+        if not user:
+            user = User(
+                nombre=user_info['name'],
+                cedula=None,
+                telefono=None,
+                email=user_info['email'],
+                password=None,
+                username=user_info['name']
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        login_user(user)
+        session['user_id'] = user.id
+        return redirect('/dashboard')
+    except Exception as e:
+        return jsonify({"msg": "Error al autenticar con Google", "error": str(e)}), 500
