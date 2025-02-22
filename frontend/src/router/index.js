@@ -9,7 +9,7 @@ const routes = [
   { path: "/register", component: RegisterForm },
 ];
 
-const router = createRouter({
+const route = createRouter({
   history: createWebHistory(),
   routes,
 });
