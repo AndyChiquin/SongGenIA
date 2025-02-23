@@ -89,7 +89,7 @@ export default {
   methods: {
     async register() {
       try {
-        const response = await axios.post("http://localhost:5000/register", this.user);
+        const response = await axios.post("http://localhost:3000/register", this.user);
         alert(response.data.msg);
         this.$router.push("/login");
       } catch (error) {

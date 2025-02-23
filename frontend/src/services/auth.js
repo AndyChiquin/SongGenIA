@@ -23,8 +23,7 @@ export const register = async (username, email, password) => {
 
 export const loginWithGoogle = async () => {
   try {
-    const response = await axios.get(`${AUTH_API_URL}/auth/google`);
-    window.location.href = response.data.auth_url; // Redirige a la autenticación de Google
+    window.location.href = `${AUTH_API_URL}/login/auth/google`; // Deja que el backend maneje la redirección
   } catch (error) {
     console.error("Error en la autenticación con Google:", error);
   }

@@ -1,9 +1,10 @@
 from Login_Register.database import db
 from flask_login import UserMixin
+from passlib.hash import bcrypt
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
-    
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     nombre = db.Column(db.String(100), nullable=False)
     cedula = db.Column(db.String(20), unique=True, nullable=True)
@@ -11,7 +12,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
-    
+
     def to_dict(self):
         """Convierte el objeto User a un diccionario"""
         return {
@@ -25,10 +26,8 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         """Método para verificar la contraseña (deberías usar bcrypt para encriptar y verificar)"""
-        from passlib.hash import bcrypt
         return bcrypt.verify(password, self.password)
 
     def set_password(self, password):
         """Método para encriptar la contraseña"""
-        from passlib.hash import bcrypt
         self.password = bcrypt.hash(password)

@@ -4,6 +4,7 @@ from flask import jsonify, request, session, redirect, url_for
 from Login_Register.user import User
 from Login_Register.database import db
 from flask_login import login_user
+from passlib.hash import bcrypt
 
 
 def register():
@@ -25,7 +26,7 @@ def register():
         return jsonify({"msg": "El correo electrónico ya está registrado"}), 400
     
     # Encriptar contraseña
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    hashed_password = bcrypt.hash(password)
     
     try:
         # Crear nuevo usuario

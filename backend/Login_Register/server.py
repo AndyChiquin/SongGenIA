@@ -11,9 +11,6 @@ load_dotenv()
 # Crear la aplicación
 app = create_app()
 
-# Habilitar CORS después de crear la app
-CORS(app)
-
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 3000))  # Puedes cambiar el valor predeterminado del puerto aquí si lo necesitas
     app.run(host='0.0.0.0', port=port, debug=True)  # Debug debe ser False en producción

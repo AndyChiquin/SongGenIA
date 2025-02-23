@@ -1,36 +1,51 @@
-from flask import Flask
-from flask_cors import CORS
-from Login_Register.database import db, init_db
-from Login_Register.passport import init_passport
-from Login_Register.auth import auth_bp, init_oauth_routes  # Importamos correctamente el blueprint
+from flask import Flask, jsonify, url_for
 import os
-from flask_session import Session
-from datetime import timedelta
+from Login_Register.database import init_db
+from Login_Register.passport import init_passport
+from Login_Register.auth_controller import register, login, google_callback
+from flask_cors import CORS
 
 def create_app():
-    """Crea y configura la aplicación Flask"""
     app = Flask(__name__)
+    CORS(app) 
+    
 
-    # Configuración básica
+    # Cargar variables de entorno
+    if not os.getenv('SECRET_KEY') or not os.getenv('GOOGLE_CLIENT_ID') or not os.getenv('GOOGLE_CLIENT_SECRET'):
+        raise ValueError("Las variables de entorno SECRET_KEY, GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no están definidas.")
+
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
+    app.config['GOOGLE_CLIENT_ID'] = os.getenv('GOOGLE_CLIENT_ID')
+    app.config['GOOGLE_CLIENT_SECRET'] = os.getenv('GOOGLE_CLIENT_SECRET')
 
-    # Inicializar extensiones
-    CORS(app)
-    Session(app)
-
-    # Inicializar base de datos
+    # Inicializar base de datos y autenticación
     init_db(app)
-
-    # Inicializar autenticación
     google = init_passport(app)
 
-    # Inicializar rutas OAuth
-    init_oauth_routes(auth_bp, google) 
+    # Rutas de autenticación
+    @app.route('/register', methods=['POST'])
+    def user_register():
+        try:
+            return register()
+        except Exception as e:
+            return jsonify({"msg": "Error al registrar el usuario", "error": str(e)}), 500
 
-    # Registrar blueprints
-    app.register_blueprint(auth_bp, url_prefix='/login/auth')
+    @app.route('/login', methods=['POST'])
+    def user_login():
+        try:
+            return login()
+        except Exception as e:
+            return jsonify({"msg": "Error al iniciar sesión", "error": str(e)}), 500
 
+    @app.route('/login/auth/google')
+    def google_login():
+        return google.authorize_redirect(url_for('google_callback_route', _external=True))
+
+    @app.route('/login/auth/google/callback')
+    def google_callback_route():
+        try:
+            return google_callback(google)
+        except Exception as e:
+            return jsonify({"msg": "Error en la autenticación de Google", "error": str(e)}), 500
 
     return app
