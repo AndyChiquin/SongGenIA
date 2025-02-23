@@ -1,66 +1,142 @@
 <template>
-  <div class="register-form">
-    <h2>📝 Crear cuenta</h2>
-    <form @submit.prevent="submitRegister">
-      <label for="username">👤 Nombre de usuario:</label>
-      <input v-model="username" type="text" id="username" placeholder="Ingresa tu nombre" required />
-
-      <label for="email">📧 Correo electrónico:</label>
-      <input v-model="email" type="email" id="email" placeholder="Ingresa tu correo" required />
-
-      <label for="password">🔒 Contraseña:</label>
-      <input v-model="password" type="password" id="password" placeholder="Ingresa tu contraseña" required />
-
-      <button type="submit">Crear cuenta</button>
+  <div class="register-container">
+    <h2>Registro de Usuario</h2>
+    <form @submit.prevent="register">
+      <div class="form-group">
+        <label for="nombre">Nombre</label>
+        <input
+          id="nombre"
+          v-model="user.nombre"
+          type="text"
+          required
+        >
+      </div>
+      <div class="form-group">
+        <label for="cedula">Cédula</label>
+        <input
+          id="cedula"
+          v-model="user.cedula"
+          type="text"
+          required
+        >
+      </div>
+      <div class="form-group">
+        <label for="telefono">Teléfono</label>
+        <input
+          id="telefono"
+          v-model="user.telefono"
+          type="text"
+          required
+        >
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input
+          id="email"
+          v-model="user.email"
+          type="email"
+          required
+        >
+      </div>
+      <div class="form-group">
+        <label for="username">Usuario</label>
+        <input
+          id="username"
+          v-model="user.username"
+          type="text"
+          required
+        >
+      </div>
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <input
+          id="password"
+          v-model="user.password"
+          type="password"
+          required
+        >
+      </div>
+      <button type="submit">
+        Registrar
+      </button>
+      <p
+        v-if="error"
+        class="error"
+      >
+        {{ error }}
+      </p>
     </form>
-
-    <button @click="submitGoogleRegister">🟢 Registrarse con Google</button>
-
-    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
   </div>
 </template>
 
 <script>
-import { register, loginWithGoogle } from "@/services/auth"; // Importamos desde `auth.js`
+import axios from "axios";
 
 export default {
   data() {
     return {
-      username: "",
-      email: "",
-      password: "",
-      errorMessage: null,
+      user: {
+        nombre: "",
+        cedula: "",
+        telefono: "",
+        email: "",
+        username: "",
+        password: ""
+      },
+      error: null
     };
   },
   methods: {
-    async submitRegister() {
+    async register() {
       try {
-        const response = await register(this.username, this.email, this.password);
-        if (response.error) {
-          this.errorMessage = response.error;
-        } else {
-          this.$router.push("/login"); // Redirigir al login después del registro exitoso
-        }
+        const response = await axios.post("http://localhost:5000/register", this.user);
+        alert(response.data.msg);
+        this.$router.push("/login");
       } catch (error) {
-        this.errorMessage = "Hubo un error al crear la cuenta.";
+        this.error = error.response?.data?.msg || "Error al registrar el usuario";
       }
-    },
-    submitGoogleRegister() {
-      loginWithGoogle(); // Llama a la autenticación con Google
     }
   }
 };
 </script>
 
 <style scoped>
-.register-form {
+.register-container {
   max-width: 400px;
   margin: auto;
   padding: 20px;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
+.form-group {
+  margin-bottom: 15px;
+}
+label {
+  display: block;
+  font-weight: bold;
+}
+input {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+button {
+  width: 100%;
+  padding: 10px;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background: #0056b3;
 }
 .error {
   color: red;
+  margin-top: 10px;
 }
 </style>

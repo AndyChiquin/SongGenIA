@@ -1,5 +1,3 @@
-
-
 from flask import Flask
 from flask_cors import CORS
 from Login_Register.database import db, init_db
@@ -11,7 +9,7 @@ from datetime import timedelta
 
 def create_app():
     """Crea y configura la aplicación Flask"""
-    app = Flask(__name__, static_folder='../frontend', static_url_path='')
+    app = Flask(__name__)
 
     # Configuración básica
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
@@ -19,7 +17,7 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 
     # Inicializar extensiones
-    CORS(app, resources={r"/*": {"origins": "http://localhost:8080"}})
+    CORS(app)
     Session(app)
 
     # Inicializar base de datos
@@ -28,27 +26,11 @@ def create_app():
     # Inicializar autenticación
     google = init_passport(app)
 
-    # Inicializar rutas OAuth (aquí ya puedes registrar las rutas del OAuth)
-    init_oauth_routes(google)
+    # Inicializar rutas OAuth
+    init_oauth_routes(auth_bp, google) 
 
-    # Registrar blueprints después de inicializar todas las rutas
+    # Registrar blueprints
     app.register_blueprint(auth_bp, url_prefix='/login/auth')
 
-    # Rutas para servir archivos estáticos
-    @app.route('/')
-    def index():
-        return app.send_static_file('index.html')
-
-    @app.route('/login')
-    def login_page():
-        return app.send_static_file('views/login.html')
-
-    @app.route('/register')
-    def register_page():
-        return app.send_static_file('views/register.html')
-
-    @app.route('/dashboard')
-    def dashboard_page():
-        return app.send_static_file('views/dashboard.html')
 
     return app

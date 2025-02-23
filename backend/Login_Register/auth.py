@@ -3,14 +3,13 @@ from flask import Blueprint, session, redirect, url_for
 from Login_Register.auth_controller import register, login, google_callback
 from flask_login import login_required, logout_user
 
-# Crear blueprint para las rutas de autenticación
 auth_bp = Blueprint('auth', __name__)
 
 # Rutas para el registro y login con credenciales
 auth_bp.route('/register', methods=['POST'])(register)
 auth_bp.route('/login', methods=['POST'])(login)
 
-def init_oauth_routes(google):
+def init_oauth_routes(auth_bp, google):
     @auth_bp.route('/google')
     def google_login():
         redirect_uri = url_for('auth.google_auth_callback', _external=True)
@@ -26,3 +25,4 @@ def init_oauth_routes(google):
         logout_user()
         session.clear()
         return redirect('/')
+

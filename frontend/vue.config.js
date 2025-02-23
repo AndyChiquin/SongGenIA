@@ -1,8 +1,15 @@
-import { defineConfig } from '@vue/cli-service'
-
-export default defineConfig({
+module.exports = {
   transpileDependencies: true,
   devServer: {
-    proxy: 'http://localhost:3000'
+    proxy: {
+      "/api/auth": {
+        target: "http://localhost:3000",
+        changeOrigin: true
+      },
+      "/api/music": {
+        target: "http://localhost:5000",
+        changeOrigin: true
+      }
+    }
   }
-})
+};

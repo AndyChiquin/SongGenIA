@@ -1,11 +1,17 @@
 {
-    "parser": "@babel/eslint-parser",
-    "parserOptions": {
-      "requireConfigFile": false
-    },
-    "extends": [
-      "plugin:vue/vue3-recommended",
-      "eslint:recommended"
-    ]
+  "parser": "vue-eslint-parser",
+  "parserOptions": {
+    "requireConfigFile": false
+  },
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "extends": [
+    "plugin:vue/vue3-recommended",
+    "eslint:recommended"
+  ],
+  "rules": {
+    "vue/multi-word-component-names": "off"
   }
-  
+}

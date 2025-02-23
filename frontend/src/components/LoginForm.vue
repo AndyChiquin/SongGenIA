@@ -3,17 +3,38 @@
     <h2>🔑 Iniciar sesión</h2>
     <form @submit.prevent="submitLogin">
       <label for="email">📧 Correo electrónico:</label>
-      <input v-model="email" type="email" id="email" placeholder="Ingresa tu correo" required />
+      <input
+        id="email"
+        v-model="email"
+        type="email"
+        placeholder="Ingresa tu correo"
+        required
+      >
 
       <label for="password">🔒 Contraseña:</label>
-      <input v-model="password" type="password" id="password" placeholder="Ingresa tu contraseña" required />
+      <input
+        id="password"
+        v-model="password"
+        type="password"
+        placeholder="Ingresa tu contraseña"
+        required
+      >
 
-      <button type="submit">Iniciar sesión</button>
+      <button type="submit">
+        Iniciar sesión
+      </button>
     </form>
 
-    <button @click="googleLogin">🟢 Iniciar sesión con Google</button>
+    <button @click="googleLogin">
+      🟢 Iniciar sesión con Google
+    </button>
 
-    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
+    <p
+      v-if="errorMessage"
+      class="error"
+    >
+      {{ errorMessage }}
+    </p>
   </div>
 </template>
 
@@ -32,10 +53,10 @@ export default {
     async submitLogin() {
       try {
         const response = await login(this.email, this.password);
-        
+
         if (response.token) {
           localStorage.setItem("authToken", response.token); // Guardamos el token
-          this.$router.push("/"); // Redirigir a la página principal
+          this.$router.push("/dashboard"); // Redirigir al dashboard
         } else {
           this.errorMessage = response.error || "Credenciales incorrectas.";
         }

@@ -1,11 +1,9 @@
 import axios from "axios";
+import { AUTH_API_URL } from "./api"; 
 
-const API_URL = "http://127.0.0.1:3000"; // Dirección del backend
-
-// Iniciar sesión con correo y contraseña
 export const login = async (email, password) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, { email, password });
+    const response = await axios.post(`${AUTH_API_URL}/login`, { email, password });
     return response.data;
   } catch (error) {
     console.error("Error en el login:", error);
@@ -13,10 +11,9 @@ export const login = async (email, password) => {
   }
 };
 
-// Registrar un nuevo usuario
 export const register = async (username, email, password) => {
   try {
-    const response = await axios.post(`${API_URL}/register`, { username, email, password });
+    const response = await axios.post(`${AUTH_API_URL}/register`, { username, email, password });
     return response.data;
   } catch (error) {
     console.error("Error en el registro:", error);
@@ -24,10 +21,9 @@ export const register = async (username, email, password) => {
   }
 };
 
-// Iniciar sesión con Google
 export const loginWithGoogle = async () => {
   try {
-    const response = await axios.get(`${API_URL}/auth/google`);
+    const response = await axios.get(`${AUTH_API_URL}/auth/google`);
     window.location.href = response.data.auth_url; // Redirige a la autenticación de Google
   } catch (error) {
     console.error("Error en la autenticación con Google:", error);

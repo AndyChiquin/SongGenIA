@@ -5,8 +5,16 @@
     
     <!-- Sección de Login y Registro -->
     <div class="auth-links">
-      <p>¿Ya tienes cuenta? <router-link to="/login">Inicia sesión</router-link></p>
-      <p>¿No tienes cuenta? <router-link to="/register">Regístrate</router-link></p>
+      <p>
+        ¿Ya tienes cuenta? <router-link to="/login">
+          Inicia sesión
+        </router-link>
+      </p>
+      <p>
+        ¿No tienes cuenta? <router-link to="/register">
+          Regístrate
+        </router-link>
+      </p>
     </div>
   </div>
 </template>
