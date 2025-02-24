@@ -92,6 +92,15 @@ def google_callback(google):
 
         login_user(user)
         session['user_id'] = user.id
-        return jsonify({"msg": "Autenticación exitosa", "user": user.to_dict()})
+        
+        # Redirigir al frontend con el token
+        token = jwt.encode(
+            {"id": user.id, "email": user.email},
+            os.getenv('SECRET_KEY'),
+            algorithm="HS256"
+        )
+        
+        # Redirigir a la página principal del frontend con el token
+        return redirect(f'http://localhost:8080/dashboard?token={token}')  # Cambia la URL a la que debe redirigir.
     except Exception as e:
         return jsonify({"msg": "Error al autenticar con Google", "error": str(e)}), 500

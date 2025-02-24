@@ -20,11 +20,7 @@ export const register = async (username, email, password) => {
     return { error: error.response?.data?.message || "No se pudo registrar el usuario" };
   }
 };
-
 export const loginWithGoogle = async () => {
-  try {
-    window.location.href = `${AUTH_API_URL}/login/auth/google`; // Deja que el backend maneje la redirección
-  } catch (error) {
-    console.error("Error en la autenticación con Google:", error);
-  }
+  // Redirige al backend para la autenticación con Google
+  window.location.href = `${AUTH_API_URL}/login/auth/google`;
 };
