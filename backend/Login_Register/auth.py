@@ -3,14 +3,14 @@ from flask_oauthlib.client import OAuth
 from flask_login import login_required, logout_user
 from werkzeug.exceptions import HTTPException
 
-# Instancia de Blueprint para las rutas de autenticación
+
 auth_bp = Blueprint('auth', __name__, url_prefix='/login/auth')
 
 # Inicialización del objeto OAuth
 oauth = OAuth()
 
 def init_oauth_routes(auth_bp):
-    # Inicializa Google OAuth
+    
     google = oauth.remote_app(
         'google',
         consumer_key=current_app.config['GOOGLE_CLIENT_ID'],

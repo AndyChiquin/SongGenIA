@@ -56,12 +56,12 @@ export default {
     };
   },
   mounted() {
-    // Si la URL contiene un token (después de la redirección de Google)
+    
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     if (token) {
-      localStorage.setItem("authToken", token);  // Guardamos el token en el localStorage
-      this.$router.push("/dashboard");  // Redirigimos al dashboard
+      localStorage.setItem("authToken", token);  
+      this.$router.push("/dashboard");  
     }
   },
   methods: {
@@ -70,8 +70,8 @@ export default {
         const response = await login(this.email, this.password);
 
         if (response.token) {
-          localStorage.setItem("authToken", response.token); // Guardamos el token
-          this.$router.push("/dashboard"); // Redirigir al dashboard
+          localStorage.setItem("authToken", response.token); 
+          this.$router.push("/dashboard"); 
         } else {
           this.errorMessage = response.error || "Credenciales incorrectas.";
         }

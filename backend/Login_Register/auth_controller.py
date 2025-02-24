@@ -66,7 +66,7 @@ def login():
         algorithm="HS256"
     )
     
-    # Iniciar sesión en Flask-Login
+   
     login_user(user)
     
     return jsonify({"token": token, "user": user.to_dict()})
@@ -101,6 +101,6 @@ def google_callback(google):
         )
         
         # Redirigir a la página principal del frontend con el token
-        return redirect(f'http://localhost:8080/dashboard?token={token}')  # Cambia la URL a la que debe redirigir.
+        return redirect(f'http://localhost:8080/dashboard?token={token}') 
     except Exception as e:
         return jsonify({"msg": "Error al autenticar con Google", "error": str(e)}), 500
