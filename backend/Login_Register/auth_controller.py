@@ -74,7 +74,7 @@ def login():
 def google_callback(google):
     try:
         token = google.authorize_access_token()
-        resp = google.get('userinfo')
+        resp = google.get('https://www.googleapis.com/oauth2/v2/userinfo')
         user_info = resp.json()
 
         user = User.query.filter_by(email=user_info['email']).first()
@@ -92,6 +92,6 @@ def google_callback(google):
 
         login_user(user)
         session['user_id'] = user.id
-        return redirect('/dashboard')
+        return jsonify({"msg": "Autenticación exitosa", "user": user.to_dict()})
     except Exception as e:
         return jsonify({"msg": "Error al autenticar con Google", "error": str(e)}), 500
