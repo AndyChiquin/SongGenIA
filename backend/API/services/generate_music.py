@@ -2,9 +2,7 @@ import requests
 from config import API_KEY
 
 API_URL = "https://apibox.erweima.ai/api/v1/generate"
-
-# 📌 URL de callback (puede ser un webhook público o tu propio backend)
-CALLBACK_URL = "https://webhook.site/tu-url-de-prueba"  # Cambia esto
+CALLBACK_URL = "https://webhook.site/tu-url-de-prueba"  # Cambia esto a tu URL real
 
 def get_audio(task_id):
     """Consulta el estado de la generación de audio y extrae los enlaces."""
@@ -21,47 +19,44 @@ def get_audio(task_id):
 
         if response.status_code == 200:
             data = response.json()
+
+            if not data or "data" not in data:
+                return {"error": "La API no devolvió datos válidos."}
+
             suno_data = data.get("data", {}).get("response", {}).get("sunoData", [])
-            
+
+            # Si no hay datos en sunoData, significa que la canción aún no está lista
+            if not suno_data:
+                return {"taskId": task_id, "status": "PENDING", "message": "La canción aún está procesándose."}
+
             # Extraer los enlaces de los audios generados
-            audio_links = []
-            for song in suno_data:
-                audio_links.append({
+            audio_links = [
+                {
                     "streamAudioUrl": song.get("streamAudioUrl"),
                     "sourceStreamAudioUrl": song.get("sourceStreamAudioUrl")
-                })
+                } for song in suno_data
+            ]
 
             return {"taskId": task_id, "audio_links": audio_links}
         else:
-            return {"error": response.text}
+            return {"error": f"Error en la API: {response.text}"}
     except Exception as e:
-        return {"error": str(e)}
+        return {"error": f"Excepción en la solicitud: {str(e)}"}
 
-
-
-
-def generate_music(lyrics, genre, mood, custom_mode=True, instrumental=False):
+def generate_music(lyrics, genre, mood, instrumental=False):
     """Genera música con la API de Suno AI."""
     if not API_KEY:
         return {"error": "No se encontró la clave API."}
 
-    # 📌 Si customMode es True, necesitamos más datos
-    if custom_mode:
-        payload = {
-            "customMode": True,
-            "estilo": genre,
-            "titulo": "Canción generada",
-            "mensaje": lyrics,
-            "instrumental": instrumental,
-            "callBackUrl": CALLBACK_URL  # 📌 Agregamos la URL de callback
-        }
-    else:
-        # 📌 Si customMode es False, solo enviamos mensaje y callback
-        payload = {
-            "customMode": False,
-            "mensaje": lyrics,
-            "callBackUrl": CALLBACK_URL  # 📌 Agregamos la URL de callback
-        }
+    payload = {
+        "prompt": lyrics,  # Frase del usuario
+        "style": genre,  # Género musical
+        "title": "Canción generada",  # Nombre de la canción
+        "customMode": True,  # Modo personalizado obligatorio
+        "instrumental": instrumental,  # False para voz, True para instrumental
+        "model": "V3_5",  # Versión del modelo (ajusta si es necesario)
+        "callBackUrl": CALLBACK_URL  # URL de callback
+    }
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -71,7 +66,6 @@ def generate_music(lyrics, genre, mood, custom_mode=True, instrumental=False):
     try:
         response = requests.post(API_URL, json=payload, headers=headers)
         
-        # 📌 Ver respuesta completa en la consola
         print("Respuesta de Suno AI:", response.status_code, response.text)
 
         if response.status_code == 200:
@@ -80,6 +74,3 @@ def generate_music(lyrics, genre, mood, custom_mode=True, instrumental=False):
             return {"error": response.text}
     except Exception as e:
         return {"error": str(e)}
-    
-
-    
