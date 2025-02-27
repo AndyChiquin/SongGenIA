@@ -33,13 +33,24 @@ else:
 
 # ✅ 5. Función para preprocesar la entrada del usuario
 def preprocesar_texto(texto, max_length=15):
-    """Convierte la entrada en tokens numéricos usando el tokenizador cargado."""
-    tokens = texto.lower().split()  # Tokenización simple
-    secuencia = tokenizador.texts_to_sequences([tokens])
+    """Preprocesa el texto eliminando ruido y convirtiéndolo en tokens numéricos."""
+    # Normalización del texto
+    texto = texto.lower().strip()
+    
+    # Tokenización usando spaCy
+    doc = nlp(texto)
+    tokens = [token.lemma_ for token in doc if not token.is_punct and not token.is_stop]  # Lematización y limpieza
+    
+    if not tokens:  # Evitar secuencias vacías
+        return np.zeros((1, max_length))  # Devolver una secuencia de ceros
+    
+    # Convertir tokens en secuencia numérica
+    secuencia = tokenizador.texts_to_sequences([" ".join(tokens)])
+    
+    # Rellenar o truncar la secuencia
     secuencia_padded = pad_sequences(secuencia, maxlen=max_length, padding="post")
+
     return secuencia_padded
-
-
 
 
 # ✅ Cargar modelo de lematización en español
@@ -103,6 +114,15 @@ def generar_texto(texto_inicial, max_words=20, temperatura=0.5, top_p=0.9):
 
         texto_generado.append(palabra_generada)
 
+    # Verificar si el texto generado es suficiente
+    if len(texto_generado) == 0:
+        print("❌ ERROR: No se pudo generar texto válido.")
+        return ""
+
+    # Guardar la letra generada en un archivo
+    with open("letra_generada.txt", "w", encoding="utf-8") as f:
+        f.write(" ".join(texto_generado))
+
     return " ".join(texto_generado)
 
 # ✅ 7. Prueba del sistema
@@ -110,4 +130,3 @@ if __name__ == "__main__":
     entrada_usuario = input("🎶 Escribe una palabra o frase inicial: ")
     resultado = generar_texto(entrada_usuario)  # ✅ USAR LA FUNCIÓN CORRECTA
     print(f"🎤 Texto generado: {resultado}")
-
