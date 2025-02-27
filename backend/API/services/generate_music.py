@@ -1,12 +1,26 @@
 import requests
+import time
 from config import API_KEY
 
 API_URL = "https://apibox.erweima.ai/api/v1/generate"
-STATUS_URL = "https://apibox.erweima.ai/api/v1/generate/record-info"  # URL para consultar el estado de la tarea
+CALLBACK_URL = "https://webhook.site/tu-url-de-prueba"  # Cambia esto a tu URL real
+LETRA_ARCHIVO = r"C:\Users\jessi\OneDrive\Documentos\GitHub\SongGenIA\backend\API\letra_generada.txt"
+
+
+ # Archivo donde se guarda la letra
+
+def cargar_letra_desde_archivo():
+    """Carga la letra de la canción desde un archivo de texto."""
+    try:
+        with open(LETRA_ARCHIVO, "r", encoding="utf-8", errors="ignore") as file:
+            letra = file.read().strip()
+        return letra
+    except FileNotFoundError:
+        return None
 
 def get_audio(task_id):
     """Consulta el estado de la generación de audio y extrae los enlaces."""
-    url = f"{STATUS_URL}?taskId={task_id}"
+    url = f"https://apibox.erweima.ai/api/v1/generate/record-info?taskId={task_id}"
 
     headers = {
         "Authorization": f"Bearer {API_KEY}",
@@ -19,6 +33,7 @@ def get_audio(task_id):
 
         if response.status_code == 200:
             data = response.json()
+            print("Datos completos de la respuesta:", data)  # Imprimir la respuesta completa
 
             if not data or "data" not in data:
                 return {"error": "La API no devolvió datos válidos."}
@@ -41,59 +56,53 @@ def get_audio(task_id):
     except Exception as e:
         return {"error": f"Excepción en la solicitud: {str(e)}"}
 
-def leer_letra_desde_archivo():
-    """Lee la letra generada desde el archivo 'letra_generada.txt'."""
-    try:
-        with open("letra_generada.txt", "r", encoding="utf-8") as f:
-            letra = f.read()
-        return letra
-    except Exception as e:
-        print(f"Error al leer el archivo: {e}")
-        return None
+def generate_music(genre, mood, instrumental=False):
+    """Genera música con la API de Suno AI usando la letra almacenada en un archivo."""
+    if not API_KEY:
+        return {"error": "No se encontró la clave API."}
 
-def generar_cancion_con_suno(letra, genre):
-    """Genera música con la API de Suno AI usando la letra generada automáticamente."""
-    url = API_URL  # Usamos la URL correcta de la API
+    letra = cargar_letra_desde_archivo()
+    if not letra:
+        return {"error": "No se encontró la letra de la canción en el archivo."}
+
+    payload = {
+        "prompt": letra,  # Se usa la letra del archivo en lugar del prompt
+        "style": genre,
+        "mood":mood,  
+        "title": "Canción generada",  
+        "customMode": True,  
+        "instrumental": instrumental,  
+        "model": "V3_5",  
+        "callBackUrl": CALLBACK_URL  
+    }
+
     headers = {
         "Authorization": f"Bearer {API_KEY}",
         "Content-Type": "application/json"
     }
-    
-    # Aquí estamos utilizando la letra leída desde el archivo
-    data = {
-        "text": letra,         # Aquí va la letra que leímos del archivo
-        "style": genre,        # Estilo de la música (por ejemplo: "pop", "classical")
-        "title": "Mi Canción", # Título de la música
-        "customMode": True,    # Habilitar el modo personalizado
-        "instrumental": False, # Si no quieres instrumental, ponlo en False
-        "model": "V4",         # Usar la versión V4
-        "duration": 30         # Duración en segundos
-    }
 
-    # Hacemos el POST a la API
-    response = requests.post(url, json=data, headers=headers)
+    try:
+        response = requests.post(API_URL, json=payload, headers=headers)
+        
+        print("Respuesta de Suno AI:", response.status_code, response.text)
 
-    if response.status_code == 200:
-        resultado = response.json()
-        task_id = resultado.get("task_id")
-        print(f"🎵 Canción generada con task_id: {task_id}")
-
-        # Ahora consulta el estado de la tarea con el task_id
-        audio_info = get_audio(task_id)
-
-        if "audio_links" in audio_info:
-            for audio in audio_info["audio_links"]:
-                print(f"🎶 Enlace de audio: {audio['streamAudioUrl']}")
+        if response.status_code == 200:
+            return response.json()
         else:
-            print("❌ Error al obtener el enlace de la canción:", audio_info.get("error"))
-    else:
-        print("❌ Error al generar la canción:", response.text)
+            return {"error": response.text}
+    except Exception as e:
+        return {"error": str(e)}
 
 # Probar con la letra generada desde el archivo
 if __name__ == "__main__":
-    letra_generada = leer_letra_desde_archivo()
+    letra_generada = cargar_letra_desde_archivo()
     if letra_generada:
         print(f"🎤 Texto generado: {letra_generada}")
-        generar_cancion_con_suno(letra_generada, "Pop")  # Puedes cambiar el estilo aquí
+        resultado = generate_music("Pop", "happy")  # Género y estado de ánimo como ejemplo
+
+        if "audio_links" in resultado:
+            print("✅ Canción generada exitosamente.")
+        else:
+            print("❌ Hubo un problema al generar la canción.")
     else:
         print("❌ No se pudo leer la letra generada.")

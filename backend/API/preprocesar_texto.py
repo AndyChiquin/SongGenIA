@@ -7,7 +7,6 @@ import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.text import tokenizer_from_json
 
 
 # ✅ 1. Obtener la ruta base
@@ -31,6 +30,8 @@ else:
     print("❌ ERROR: No se encontró 'tokenizer.json' en 'models/'. Verifica que lo hayas copiado correctamente.")
     exit()
 
+
+nlp = spacy.load("es_core_news_sm")
 # ✅ 5. Función para preprocesar la entrada del usuario
 def preprocesar_texto(texto, max_length=15):
     """Preprocesa el texto eliminando ruido y convirtiéndolo en tokens numéricos."""
@@ -54,7 +55,6 @@ def preprocesar_texto(texto, max_length=15):
 
 
 # ✅ Cargar modelo de lematización en español
-nlp = spacy.load("es_core_news_sm")
 
 def lematizar_texto(texto):
     """Reduce el texto a su forma base para mejorar la interpretación del modelo."""
