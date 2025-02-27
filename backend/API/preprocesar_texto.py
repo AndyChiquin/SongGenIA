@@ -106,37 +106,19 @@ def contiene_signos_prohibidos(palabra):
     signos_prohibidos = set("¿¡!?;:")  # Lista de signos prohibidos
     return any(caracter in palabra for caracter in signos_prohibidos)
 
-def buscar_rima(palabra):
-    """Devuelve una palabra que rime con la palabra dada o la misma si no encuentra coincidencia."""
-    rimas = {
-        "amor": ["dolor", "flor", "valor"],
-        "luz": ["cruz", "voz", "azul"],
-        "día": ["alegría", "melodía", "fantasía"],
-        "soledad": ["libertad", "oscuridad", "eternidad"],
-        "dolor": ["sabor", "temor", "rencor"],
-        "corazón": ["pasión", "razón", "canción"],
-        "mirar": ["soñar", "bailar", "brillar"]
-    }
-
-    for clave, lista_rimas in rimas.items():
-        if palabra.endswith(clave):  # Buscar rima basada en terminación
-            return random.choice(lista_rimas)  
-
-    return palabra  # Si no encuentra rima, devuelve la misma palabra
-
-
 def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
-    """Genera una secuencia de texto basada en el sentimiento del usuario con rimas."""
+    """Genera una secuencia de texto basada en el sentimiento del usuario manteniendo coherencia con los tokens generados."""
     
-    # Obtener palabras iniciales según la emoción detectada
+    # Obtener una palabra inicial basada en la emoción detectada
     tema_generado = generar_palabras_clave(texto_usuario)
-    texto_generado = [tema_generado]  
-
+    texto_generado = [tema_generado]  # Primera palabra
+    
     ultimas_palabras = set()
     palabras_generadas = 0
 
     while palabras_generadas < max_words:
-        contexto = " ".join(texto_generado[-5:])  # Últimas palabras como contexto
+        # Usar últimas 3-5 palabras como contexto para generar la siguiente palabra
+        contexto = " ".join(texto_generado[-5:])  # Usamos las últimas palabras generadas
         entrada_procesada = preprocesar_texto(contexto)
 
         predicciones = modelo.predict(entrada_procesada, verbose=0)[0]
@@ -147,7 +129,7 @@ def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
         indice_palabra = nucleus_sampling(predicciones, top_p)
         palabra_generada = tokenizador.index_word.get(indice_palabra, None)
 
-        # 🚨 Filtrar palabras inválidas
+        # 🚨 Filtrar palabras fuera de contexto
         if not palabra_generada or palabra_generada in ultimas_palabras or not detectar_idioma(palabra_generada) or contiene_signos_prohibidos(palabra_generada):
             continue
 
@@ -158,7 +140,7 @@ def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
         texto_generado.append(palabra_generada)
         palabras_generadas += 1
 
-    # ✅ Aquí estructuramos los versos correctamente con rimas
+    # ✅ Aquí estructuramos los versos correctamente usando los tokens generados
     versos = []
     verso_actual = []
 
@@ -166,18 +148,13 @@ def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
         verso_actual.append(palabra)
 
         if i % 4 == 0:  # Cada 4 palabras, crear un nuevo verso
-            ultima_palabra = verso_actual[-1]  # Obtener la última palabra del verso
-            verso_actual[-1] = buscar_rima(ultima_palabra)  # Intentar cambiarla por una rima
             versos.append(" ".join(verso_actual))
             verso_actual = []
 
     if verso_actual:
-        ultima_palabra = verso_actual[-1]  
-        verso_actual[-1] = buscar_rima(ultima_palabra)  
         versos.append(" ".join(verso_actual))
 
-    return "\n".join(versos)  # Devolver el texto con estructura de versos y rimas
-
+    return "\n".join(versos)  # Devolver el texto con estructura de versos
 
 
 # ✅ 7. Prueba del sistema
