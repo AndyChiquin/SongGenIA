@@ -5,16 +5,18 @@ import numpy as np
 import spacy
 import tensorflow as tf
 from tensorflow.keras.preprocessing.sequence import pad_sequences
-from tensorflow.keras.preprocessing.text import tokenizer_from_json
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.text import tokenizer_from_json
+from spacy_langdetect import LanguageDetector
+from spacy.language import Language
+from textblob import TextBlob
 
 
 # ✅ 1. Obtener la ruta base
 ruta_base = os.path.dirname(os.path.abspath(__file__))
 
 # ✅ 2. Definir las rutas de los archivos
-ruta_modelo = os.path.join(ruta_base, "..", "models", "modelo_nuevo.keras")
+ruta_modelo = os.path.join(ruta_base, "..", "models", "modelo_nuevo2.keras")
 ruta_tokenizador = os.path.join(ruta_base, "..", "models", "tokenizer.json")
 
 # ✅ 3. Cargar el modelo
@@ -23,32 +25,65 @@ modelo = load_model(ruta_modelo)
 # ✅ 4. Cargar el tokenizador desde JSON
 if os.path.exists(ruta_tokenizador):
     with open(ruta_tokenizador, "r", encoding="utf-8") as f:
-        token_json = f.read()  # Leer el archivo JSON como texto
-    
-    tokenizador = tokenizer_from_json(token_json)  # ✅ Cargar directamente el tokenizador
+        token_json = f.read()
+    tokenizador = tokenizer_from_json(token_json)
     print("✅ Tokenizador cargado correctamente.")
 else:
     print("❌ ERROR: No se encontró 'tokenizer.json' en 'models/'. Verifica que lo hayas copiado correctamente.")
     exit()
 
-# ✅ 5. Función para preprocesar la entrada del usuario
+
+
+def analizar_sentimiento(texto):
+    """Analiza el sentimiento del texto del usuario y retorna una emoción general."""
+    sentimiento = TextBlob(texto).sentiment.polarity  # Polarity entre -1 (negativo) y 1 (positivo)
+
+    if sentimiento > 0.2:
+        return "felicidad"
+    elif sentimiento < -0.2:
+        return "tristeza"
+    else:
+        return "neutralidad"
+    
+
+def generar_palabras_clave(texto_usuario):
+    """Convierte la entrada del usuario en una idea abstracta para generar la letra."""
+    emocion = analizar_sentimiento(texto_usuario)
+
+    # Asociar palabras clave según la emoción detectada
+    palabras_clave = {
+        "felicidad": ["alegría", "brillo", "bailar", "luz", "amor"],
+        "tristeza": ["lluvia", "soledad", "nostalgia", "sombra", "dolor"],
+        "neutralidad": ["caminos", "espera", "sueños", "pensamiento", "mirada"]
+    }
+    
+    return random.choice(palabras_clave[emocion])  # Elegir una palabra aleatoria
+
+# ✅ 5. Cargar modelo de spaCy con detección de idioma
+nlp = spacy.load("es_core_news_sm")
+@Language.factory("language_detector")
+def create_language_detector(nlp, name):
+    return LanguageDetector()
+nlp.add_pipe("language_detector", last=True)
+
+def detectar_idioma(palabra):
+    """Detecta si una palabra es español o no usando spaCy y un diccionario de palabras comunes."""
+    doc = nlp(palabra)
+    idioma_detectado = doc._.language["language"]
+
+    # Lista de palabras en español más comunes para validar
+    palabras_comunes_es = {"el", "la", "de", "en", "y", "con", "para", "por", "amor", "tristeza", "alegría", "camino"}
+
+    # Si el modelo detecta español o si la palabra está en nuestro diccionario, la aceptamos
+    return idioma_detectado == "es" or palabra.lower() in palabras_comunes_es
+
+
 def preprocesar_texto(texto, max_length=15):
     """Convierte la entrada en tokens numéricos usando el tokenizador cargado."""
-    tokens = texto.lower().split()  # Tokenización simple
+    tokens = texto.lower().split()
     secuencia = tokenizador.texts_to_sequences([tokens])
     secuencia_padded = pad_sequences(secuencia, maxlen=max_length, padding="post")
     return secuencia_padded
-
-
-
-
-# ✅ Cargar modelo de lematización en español
-nlp = spacy.load("es_core_news_sm")
-
-def lematizar_texto(texto):
-    """Reduce el texto a su forma base para mejorar la interpretación del modelo."""
-    doc = nlp(texto)
-    return " ".join([token.lemma_ for token in doc])
 
 def nucleus_sampling(predictions, top_p=0.9):
     """Selecciona una palabra usando Top-p (Nucleus Sampling)."""
@@ -58,56 +93,95 @@ def nucleus_sampling(predictions, top_p=0.9):
     cumulative_probs = np.cumsum(sorted_probs)  # Calcular la suma acumulada de probabilidades
     top_p_index = np.where(cumulative_probs > top_p)[0][0]  # Obtener el punto de corte
 
-    selected_indices = sorted_indices[:top_p_index + 1]  # Mantener solo las palabras dentro de Top-p
-    if len(selected_indices.shape) > 1:  # Asegurar que sea unidimensional
-        selected_indices = selected_indices.flatten()
+    selected_indices = np.array(sorted_indices[:top_p_index + 1]).flatten()  # Asegurar que sea 1D
 
     if len(selected_indices) == 0:
         return np.argmax(predictions)  # Si no hay selección válida, usar la palabra más probable
 
-    selected_index = np.random.choice(selected_indices)  # Elegir aleatoriamente una dentro del grupo
+    return np.random.choice(selected_indices)  # Elegir aleatoriamente una dentro del grupo
 
-    return int(selected_index)
 
-def generar_texto(texto_inicial, max_words=20, temperatura=0.5, top_p=0.9):
-    """Genera una secuencia de texto con mejor coherencia y sin palabras sin sentido."""
-    texto_generado = texto_inicial.lower().split()  # Convertir la entrada en tokens
-    ultimas_palabras = set()  # Control de palabras repetidas
+def contiene_signos_prohibidos(palabra):
+    """Verifica si la palabra contiene signos que no queremos en la letra."""
+    signos_prohibidos = set("¿¡!?;:")  # Lista de signos prohibidos
+    return any(caracter in palabra for caracter in signos_prohibidos)
+
+def buscar_rima(palabra):
+    """Devuelve una palabra que rime con la palabra dada o la misma si no encuentra coincidencia."""
+    rimas = {
+        "amor": ["dolor", "flor", "valor"],
+        "luz": ["cruz", "voz", "azul"],
+        "día": ["alegría", "melodía", "fantasía"],
+        "soledad": ["libertad", "oscuridad", "eternidad"],
+        "dolor": ["sabor", "temor", "rencor"],
+        "corazón": ["pasión", "razón", "canción"],
+        "mirar": ["soñar", "bailar", "brillar"]
+    }
+
+    for clave, lista_rimas in rimas.items():
+        if palabra.endswith(clave):  # Buscar rima basada en terminación
+            return random.choice(lista_rimas)  
+
+    return palabra  # Si no encuentra rima, devuelve la misma palabra
+
+
+def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
+    """Genera una secuencia de texto basada en el sentimiento del usuario con rimas."""
     
-    for _ in range(max_words):
-        entrada_procesada = preprocesar_texto(" ".join(texto_generado))  # Preprocesar
+    # Obtener palabras iniciales según la emoción detectada
+    tema_generado = generar_palabras_clave(texto_usuario)
+    texto_generado = [tema_generado]  
 
-        # Obtener la predicción del modelo
-        predicciones = modelo.predict(entrada_procesada)[0]
+    ultimas_palabras = set()
+    palabras_generadas = 0
 
-        # Aplicar temperatura para controlar la diversidad
+    while palabras_generadas < max_words:
+        contexto = " ".join(texto_generado[-5:])  # Últimas palabras como contexto
+        entrada_procesada = preprocesar_texto(contexto)
+
+        predicciones = modelo.predict(entrada_procesada, verbose=0)[0]
         predicciones = np.log(predicciones + 1e-8) / temperatura
         exp_preds = np.exp(predicciones)
         predicciones = exp_preds / np.sum(exp_preds)
 
-        # Seleccionar palabras dentro del top-p
         indice_palabra = nucleus_sampling(predicciones, top_p)
         palabra_generada = tokenizador.index_word.get(indice_palabra, None)
 
-        # Evitar repeticiones y asegurar contexto
-        if not palabra_generada or palabra_generada in ultimas_palabras:
+        # 🚨 Filtrar palabras inválidas
+        if not palabra_generada or palabra_generada in ultimas_palabras or not detectar_idioma(palabra_generada) or contiene_signos_prohibidos(palabra_generada):
             continue
 
         ultimas_palabras.add(palabra_generada)
         if len(ultimas_palabras) > 4:
-            ultimas_palabras.pop()  # Mantener las últimas 4 palabras en la memoria
-
-        # Detener si se genera un signo de puntuación o palabra sin sentido
-        if palabra_generada in [".", ",", "!", "?"]:
-            break  
+            ultimas_palabras.pop()
 
         texto_generado.append(palabra_generada)
+        palabras_generadas += 1
 
-    return " ".join(texto_generado)
+    # ✅ Aquí estructuramos los versos correctamente con rimas
+    versos = []
+    verso_actual = []
+
+    for i, palabra in enumerate(texto_generado, start=1):
+        verso_actual.append(palabra)
+
+        if i % 4 == 0:  # Cada 4 palabras, crear un nuevo verso
+            ultima_palabra = verso_actual[-1]  # Obtener la última palabra del verso
+            verso_actual[-1] = buscar_rima(ultima_palabra)  # Intentar cambiarla por una rima
+            versos.append(" ".join(verso_actual))
+            verso_actual = []
+
+    if verso_actual:
+        ultima_palabra = verso_actual[-1]  
+        verso_actual[-1] = buscar_rima(ultima_palabra)  
+        versos.append(" ".join(verso_actual))
+
+    return "\n".join(versos)  # Devolver el texto con estructura de versos y rimas
+
+
 
 # ✅ 7. Prueba del sistema
 if __name__ == "__main__":
     entrada_usuario = input("🎶 Escribe una palabra o frase inicial: ")
-    resultado = generar_texto(entrada_usuario)  # ✅ USAR LA FUNCIÓN CORRECTA
+    resultado = generar_texto(entrada_usuario)
     print(f"🎤 Texto generado: {resultado}")
-

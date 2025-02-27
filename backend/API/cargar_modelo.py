@@ -6,7 +6,7 @@ from tensorflow.keras.models import load_model
 ruta_base = os.path.dirname(os.path.abspath(__file__))
 
 # Construir la ruta absoluta del modelo convertido
-ruta_modelo_keras = os.path.join(ruta_base, "..", "models", "modelo_nuevo.keras")
+ruta_modelo_keras = os.path.join(ruta_base, "..", "models", "red5.keras")
 
 # Verificar si el archivo existe antes de cargarlo
 if not os.path.exists(ruta_modelo_keras):
