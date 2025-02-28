@@ -1,10 +1,10 @@
 <template>
   <div class="app-body">
     <div class="login-form">
-      <h2>🔑 Iniciar sesión</h2>
+      <h2 class="title">🔑 Iniciar sesión</h2>
       <form @submit.prevent="submitLogin">
         <div class="form-group">
-          <label for="email">📧 Correo electrónico:</label>
+          <label for="email" class="input-label">📧 Correo electrónico:</label>
           <input
             id="email"
             v-model="email"
@@ -15,7 +15,7 @@
         </div>
 
         <div class="form-group">
-          <label for="password">🔒 Contraseña:</label>
+          <label for="password" class="input-label">🔒 Contraseña:</label>
           <input
             id="password"
             v-model="password"
@@ -25,14 +25,16 @@
           >
         </div>
 
-        <button type="submit">
+        <button type="submit" class="primary-button">
           Iniciar sesión
         </button>
       </form>
 
-      <button @click="googleLogin">
+      <button @click="googleLogin" class="google-button">
         🟢 Iniciar sesión con Google
       </button>
+      
+      <router-link to="/" class="home-button">🏠 Volver a Inicio</router-link>
 
       <p
         v-if="errorMessage"
@@ -79,10 +81,9 @@ export default {
         this.errorMessage = "Error al iniciar sesión. Inténtalo de nuevo.";
       }
     },
-
-    // Inicia sesión con Google
+    
     googleLogin() {
-      loginWithGoogle();  // Llamada al backend para la autenticación con Google
+      loginWithGoogle(); 
     },
   }
 };
@@ -91,59 +92,118 @@ export default {
 <style scoped>
 
 .app-body {
-  background-color: #11686448; 
-  font-family: Arial, sans-serif;
+  background: linear-gradient(to right, #6146b1, #7ec8e3);
+  font-family: 'Poppins', sans-serif;
   margin: 0;
   padding: 0;
-  min-height: 89vh; 
+  height: 100vh;
+  width: 100vw;
   display: flex;
   justify-content: center; 
-  align-items: flex-start; 
-  padding-top: 50px; 
+  align-items: center; 
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
 
 .login-form {
   max-width: 450px; 
-  padding: 30px;
-  border-radius: 10px;
-  background-color: #caf0ef; 
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+  padding: 35px;
+  border-radius: 12px;
+  background: #f0f4ff;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25); 
   width: 100%; 
+  text-align: center;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #3a3a3a;
+  margin-bottom: 20px;
 }
 
 .form-group {
   margin-bottom: 15px;
 }
 
-label {
+.input-label {
   display: block;
   margin-bottom: 8px;
-  font-weight: bold;
+  font-weight: 600;
+  color: #2c2c54;
 }
 
 input {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   font-size: 16px;
-  border-radius: 25px;
-  border: 1px solid #ccc;
+  border-radius: 8px;
+  border: 1px solid #a8a8a8;
+  background: #ffffff;
+  transition: border 0.3s;
 }
 
-button {
+input:focus {
+  border-color: #5a67d8;
+  outline: none;
+}
+
+.primary-button {
   width: 100%;
-  padding: 10px;
-  background-color: #007bff;
+  padding: 12px;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 15px;
+  transition: background 0.3s, transform 0.2s;
 }
 
-button:hover {
-  background-color: #0056b3;
+.primary-button:hover {
+  background: linear-gradient(to right, #580d99, #1e5bbf);
+  transform: scale(1.05);
+}
+
+.google-button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(to right, #f4b400, #db4437);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.google-button:hover {
+  background: linear-gradient(to right, #e2a000, #c1351d);
+  transform: scale(1.05);
+}
+
+.home-button {
+  display: inline-block;
+  margin-top: 15px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #5a67d8;
+  text-decoration: none;
+  border: 2px solid #5a67d8;
+  border-radius: 8px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.home-button:hover {
+  background: #5a67d8;
+  color: white;
 }
 
 button:focus {

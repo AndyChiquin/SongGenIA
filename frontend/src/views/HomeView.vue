@@ -2,36 +2,38 @@
   <div class="home-view">
     <!-- Título con estilo atractivo -->
     <h1 class="app-title">
-      🎵 SongGenIA
+      SongGenIA
     </h1>
     
     <!-- Imagen o GIF debajo del título -->
     <div class="image-container">
       <img
-        src="ruta/a/tu/imagen-o-gif.gif"
-        alt="Imagen o gif"
+        src="@/assets/logo.jpg"
+        alt="SongGenIA Logo"
         class="app-image"
       >
     </div>
     
     <!-- Sección de Login y Registro -->
     <div class="auth-links">
-      <p>
-        ¿Ya tienes cuenta? <router-link
+      <div class="auth-item">
+        <router-link
           to="/login"
           class="auth-link"
         >
-          Inicia sesión
+          Iniciar Sesión
         </router-link>
-      </p>
-      <p>
-        ¿No tienes cuenta? <router-link
+        <p>¿Ya tienes cuenta?</p>
+      </div>
+      <div class="auth-item">
+        <router-link
           to="/register"
           class="auth-link"
         >
           Regístrate
         </router-link>
-      </p>
+        <p>¿No tienes cuenta?</p>
+      </div>
     </div>
   </div>
 </template>
@@ -46,19 +48,34 @@ export default {
 
 .home-view {
   text-align: center;
-  padding: 0; 
-  background-color: rgba(75, 140, 158, 0.456); 
-  height: 90vh; 
+  padding: 0;
+  background: linear-gradient(to right, #6146b1, #7ec8e3);
+  height: 100vh;
+  width: 100vw;
   display: flex;
   flex-direction: column;
-  justify-content: center; 
-  align-items: center; 
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
 }
 
 .app-title {
   font-size: 3rem;
   font-weight: bold;
-  color: #4CAF50; /* Verde, puedes cambiarlo */
+  color: white; 
   margin-bottom: 20px;
 }
 
@@ -68,28 +85,38 @@ export default {
 
 .app-image {
   width: 80%;
-  max-width: 500px; /* Ajusta el tamaño del gif/imagen */
+  max-width: 500px;
   height: auto;
 }
 
 .auth-links {
   margin-top: 30px;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .auth-link {
-  color: #212a76;
+  color: #ffffff;
   text-decoration: none;
-  border: 2px solid transparent;
-  padding: 5px 40px;
+  border: 2px solid #ffffff;
+  padding: 12px 35px;
   border-radius: 25px;
-  background-color: hsla(196, 72%, 28%, 0.536); /* Botón transparente con borde sin color */
-  font-size: 1.1rem;
+  background-color: rgba(71, 49, 131, 0.3); 
+  font-size: 1.2rem;
+  font-weight: bold;
   transition: all 0.3s ease;
 }
 
 .auth-link:hover {
-  background-color: rgba(0, 123, 255, 0.2);
-  color: #fff;
+  background-color: rgba(255, 255, 255, 0.6);
+  color: #4a148c;
 }
 </style>
