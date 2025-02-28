@@ -1,7 +1,11 @@
+numpy
 flask
 requests
 python-dotenv
 flask-cors
-
-
+spacy
+tensorflow
+es-core-news-sm
+spacy_langdetect
+textblob
 

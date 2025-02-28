@@ -85,6 +85,12 @@ def preprocesar_texto(texto, max_length=15):
     secuencia_padded = pad_sequences(secuencia, maxlen=max_length, padding="post")
     return secuencia_padded
 
+def lematizar_texto(texto):
+    """Reduce el texto a su forma base para mejorar la interpretación del modelo."""   #CAMBIO
+    doc = nlp(texto)
+    return " ".join([token.lemma_ for token in doc])
+
+
 def nucleus_sampling(predictions, top_p=0.9):
     """Selecciona una palabra usando Top-p (Nucleus Sampling)."""
     sorted_indices = np.argsort(predictions)[::-1]  # Ordenar palabras de mayor a menor probabilidad
@@ -154,7 +160,16 @@ def generar_texto(texto_usuario, max_words=20, temperatura=0.5, top_p=0.9):
     if verso_actual:
         versos.append(" ".join(verso_actual))
 
-    return "\n".join(versos)  # Devolver el texto con estructura de versos
+    resultado = "\n".join(versos)  # Devolver el texto con estructura de versos
+
+    # Guardar la letra generada en un archivo
+    ruta_salida = os.path.join(ruta_base, "letra_generada.txt")
+    with open(ruta_salida, "w", encoding="utf-8") as archivo:
+        archivo.write(resultado)
+    
+    print(f"📂 La letra generada se ha guardado en '{ruta_salida}'.")
+    
+    return resultado
 
 
 # ✅ 7. Prueba del sistema
