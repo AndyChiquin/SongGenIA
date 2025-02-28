@@ -5,7 +5,7 @@ python-dotenv
 flask-cors
 spacy
 tensorflow
-es-core-news-sm
 spacy_langdetect
 textblob
 
+# instalar manualmente python -m spacy download es_core_news_sm #
