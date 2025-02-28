@@ -1,8 +1,20 @@
 import requests
+import time
 from config import API_KEY
 
 API_URL = "https://apibox.erweima.ai/api/v1/generate"
-CALLBACK_URL = "https://webhook.site/tu-url-de-prueba"  # Cambia esto a tu URL real
+CALLBACK_URL = "https://webhook.site/tu-url-de-prueba" 
+LETRA_ARCHIVO = r"C:\Users\jessi\OneDrive\Documentos\GitHub\SongGenIA\backend\API\letra_generada.txt" 
+
+
+def cargar_letra_desde_archivo():
+    """Carga la letra de la canción desde un archivo de texto."""
+    try:
+        with open(LETRA_ARCHIVO, "r", encoding="utf-8", errors="ignore") as file:
+            letra = file.read().strip()
+        return letra
+    except FileNotFoundError:
+        return None
 
 def get_audio(task_id):
     """Consulta el estado de la generación de audio y extrae los enlaces."""
@@ -19,17 +31,16 @@ def get_audio(task_id):
 
         if response.status_code == 200:
             data = response.json()
+            print("Datos completos de la respuesta:", data)  # Imprimir la respuesta completa
 
             if not data or "data" not in data:
                 return {"error": "La API no devolvió datos válidos."}
 
             suno_data = data.get("data", {}).get("response", {}).get("sunoData", [])
 
-            # Si no hay datos en sunoData, significa que la canción aún no está lista
             if not suno_data:
                 return {"taskId": task_id, "status": "PENDING", "message": "La canción aún está procesándose."}
 
-            # Extraer los enlaces de los audios generados
             audio_links = [
                 {
                     "streamAudioUrl": song.get("streamAudioUrl"),
@@ -43,19 +54,24 @@ def get_audio(task_id):
     except Exception as e:
         return {"error": f"Excepción en la solicitud: {str(e)}"}
 
-def generate_music(lyrics, genre, mood, instrumental=False):
-    """Genera música con la API de Suno AI."""
+def generate_music(genre, mood, instrumental=False):
+    """Genera música con la API de Suno AI usando la letra almacenada en un archivo."""
     if not API_KEY:
         return {"error": "No se encontró la clave API."}
 
+    letra = cargar_letra_desde_archivo()
+    if not letra:
+        return {"error": "No se encontró la letra de la canción en el archivo."}
+
     payload = {
-        "prompt": lyrics,  # Frase del usuario
-        "style": genre,  # Género musical
-        "title": "Canción generada",  # Nombre de la canción
-        "customMode": True,  # Modo personalizado obligatorio
-        "instrumental": instrumental,  # False para voz, True para instrumental
-        "model": "V3_5",  # Versión del modelo (ajusta si es necesario)
-        "callBackUrl": CALLBACK_URL  # URL de callback
+        "prompt": letra,  # Se usa la letra del archivo en lugar del prompt
+        "style": genre,
+        "mood":mood,  
+        "title": "Canción generada",  
+        "customMode": True,  
+        "instrumental": instrumental,  
+        "model": "V3_5",  
+        "callBackUrl": CALLBACK_URL  
     }
 
     headers = {
