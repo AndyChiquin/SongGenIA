@@ -7,5 +7,6 @@ spacy
 tensorflow
 spacy_langdetect
 textblob
+dotenv
 
 # instalar manualmente python -m spacy download es_core_news_sm #

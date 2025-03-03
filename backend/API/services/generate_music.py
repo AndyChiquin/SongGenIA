@@ -1,11 +1,16 @@
 import requests
 import time
-from config import API_KEY
+import os
+from dotenv import load_dotenv  # Importa dotenv para cargar variables de entorno
+
+# Cargar variables de entorno desde el archivo .env
+load_dotenv()
+
+API_KEY = os.getenv("SUNO_API_KEY")  # Obtener la clave API desde el .env
 
 API_URL = "https://apibox.erweima.ai/api/v1/generate"
-CALLBACK_URL = "https://webhook.site/tu-url-de-prueba" 
-LETRA_ARCHIVO = r"C:\Users\jessi\OneDrive\Documentos\GitHub\SongGenIA\backend\API\letra_generada.txt" 
-
+CALLBACK_URL = "https://webhook.site/tu-url-de-prueba"  # Puedes cambiar esto si es necesario
+LETRA_ARCHIVO = r"C:\Users\Pc\Documents\GitHub\SongGenIA\backend\API\letra_generada.txt"
 
 def cargar_letra_desde_archivo():
     """Carga la letra de la canción desde un archivo de texto."""
@@ -31,7 +36,7 @@ def get_audio(task_id):
 
         if response.status_code == 200:
             data = response.json()
-            print("Datos completos de la respuesta:", data)  # Imprimir la respuesta completa
+            print("Datos completos de la respuesta:", data)
 
             if not data or "data" not in data:
                 return {"error": "La API no devolvió datos válidos."}
@@ -54,24 +59,27 @@ def get_audio(task_id):
     except Exception as e:
         return {"error": f"Excepción en la solicitud: {str(e)}"}
 
-def generate_music(genre, mood, instrumental=False):
-    """Genera música con la API de Suno AI usando la letra almacenada en un archivo."""
+def generate_music(lyrics=None, genre="Pasillo", mood="Alegre", instrumental=False):
+    """Genera música con la API de Suno AI usando la letra proporcionada o desde un archivo."""
     if not API_KEY:
         return {"error": "No se encontró la clave API."}
 
-    letra = cargar_letra_desde_archivo()
-    if not letra:
-        return {"error": "No se encontró la letra de la canción en el archivo."}
+    if not lyrics:
+        print("⚠️ No se recibió letra desde la API, cargando desde el archivo...")
+        lyrics = cargar_letra_desde_archivo()
+
+    if not lyrics:
+        return {"error": "No se encontró la letra de la canción ni en la API ni en el archivo."}
 
     payload = {
-        "prompt": letra,  # Se usa la letra del archivo en lugar del prompt
+        "prompt": lyrics,
         "style": genre,
-        "mood":mood,  
-        "title": "Canción generada",  
-        "customMode": True,  
-        "instrumental": instrumental,  
-        "model": "V3_5",  
-        "callBackUrl": CALLBACK_URL  
+        "mood": mood,
+        "title": "Canción generada",
+        "customMode": True,
+        "instrumental": instrumental,
+        "model": "V3_5",
+        "callBackUrl": CALLBACK_URL
     }
 
     headers = {

@@ -2,77 +2,146 @@
   <div class="app-body">
     <div class="music-form">
       <h2 class="title">🎶 Genera tu Canción con IA</h2>
-      <form @submit.prevent="submitForm">
-        <div class="form-group">
-          <label class="input-label">📝 Escribe una frase:</label>
-          <input
-            v-model="lyrics"
-            type="text"
-            placeholder="Escribe aquí..."
-            required
-          >
-        </div>
 
-        <div class="form-group">
-          <label class="input-label">🎼 Género:</label>
-          <select v-model="genre">
-            <option>Pasillo</option>
-            <option>Sanjuanito</option>
-            <option>Albazo</option>
-          </select>
-        </div>
+      <!-- Entrada de frase inicial -->
+      <div class="form-group">
+        <label class="input-label">📝 Escribe una frase:</label>
+        <input v-model="fraseInicial" type="text" placeholder="Escribe aquí..." required>
+      </div>
 
-        <div class="form-group">
-          <label class="input-label">😊 Estado de ánimo:</label>
-          <select v-model="mood">
-            <option>Alegre</option>
-            <option>Triste</option>
-            <option>Romántico</option>
-          </select>
-        </div>
+      <!-- Botón para generar la letra -->
+      <button @click="generarLetra" class="primary-button">
+        ✍️ Generar Letra
+      </button>
 
-        <button type="submit" class="primary-button">
-          🎤 Generar Canción
-        </button>
-      </form>
+      <!-- Mensaje de carga -->
+      <p v-if="loading" class="loading-text">⌛ Procesando...</p>
 
-      <p v-if="loading" class="loading-text">
-        ⌛ Generando canción...
-      </p>
-      <p v-if="taskId" class="task-id">
-        ✅ ID de tarea: {{ taskId }}
-      </p>
+      <!-- Recuadro donde se muestra la letra generada -->
+      <div class="lyrics-box">
+        <h3>🎵 Letra Generada:</h3>
+        <textarea v-model="lyrics" readonly class="lyrics-textarea"></textarea>
+      </div>
+
+      <!-- Opciones de género y estado de ánimo -->
+      <div class="form-group">
+        <label class="input-label">🎼 Género:</label>
+        <select v-model="genre">
+          <option>Bachata</option>
+          <option>Rock</option>
+          <option>Pop</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="input-label">😊 Estado de ánimo:</label>
+        <select v-model="mood">
+          <option>Alegre</option>
+          <option>Triste</option>
+          <option>Romántico</option>
+        </select>
+      </div>
+
+      <!-- Botón para generar la música -->
+      <button @click="generarMusica" class="primary-button">
+        🎤 Generar Canción
+      </button>
+
+      <!-- Mostrar la URL cuando la música se genere -->
+      <div class="lyrics-box">
+        <h3>📢 Tu canción está lista 🎶</h3>
+        <input v-model="audioUrl" readonly class="lyrics-textarea">
+        <a v-if="audioUrl" :href="audioUrl" target="_blank" class="primary-button">🔗 Ir a la Canción</a>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { generateMusic } from "@/services/music";
+import { generateLyrics, generateMusic, getAudio } from "@/services/music";
 
 export default {
   data() {
     return {
-      lyrics: "",
+      fraseInicial: "", // Texto ingresado por el usuario
+      lyrics: "", // Letra generada
       genre: "Pasillo",
       mood: "Alegre",
-      taskId: null,
-      loading: false
+      loading: false,
+      taskId: "", // Aquí guardamos el Task ID
+      audioUrl: ""
     };
   },
   methods: {
-    async submitForm() {
-      this.loading = true;
-      const response = await generateMusic(this.lyrics, this.genre, this.mood);
-      if (response.data) {
-        this.taskId = response.data.taskId;
-      } else {
-        alert("Error al generar la canción");
+    async generarLetra() {
+      if (!this.fraseInicial) {
+        alert("Por favor, ingresa una frase inicial.");
+        return;
       }
+
+      this.loading = true;
+      const letra = await generateLyrics(this.fraseInicial);
+
+      if (letra) {
+        this.lyrics = letra; // Asigna la letra generada
+      } else {
+        alert("Error al generar la letra.");
+      }
+
       this.loading = false;
+    },
+
+    async generarMusica() {
+  if (!this.lyrics) {
+    alert("Primero genera la letra.");
+    return;
+  }
+
+  this.loading = true;
+  const taskId = await generateMusic(this.lyrics, this.genre, this.mood);
+
+  if (taskId) {
+    this.taskId = taskId;  // Asigna correctamente el Task ID
+    console.log("Task ID recibido:", this.taskId);
+    this.verificarAudio();
+  } else {
+    alert("Error al generar la música.");
+  }
+
+  this.loading = false;
+},
+
+    async verificarAudio() {
+      if (!this.taskId) {
+        alert("No se pudo obtener el Task ID.");
+        return;
+      }
+      
+      let intentos = 0;
+      const intervalo = setInterval(async () => {
+        console.log(`Intentando obtener audio con Task ID: ${this.taskId}`);
+
+        const audioUrl = await getAudio(this.taskId);
+
+        if (audioUrl) {
+          this.audioUrl = audioUrl;
+          console.log("Audio URL obtenida:", audioUrl);
+          clearInterval(intervalo);
+        }
+
+        intentos++;
+        if (intentos >= 10) {
+          clearInterval(intervalo);
+          alert("Tiempo de espera agotado, intenta nuevamente.");
+        }
+      }, 5000); // Revisar cada 5 segundos
     }
   }
 };
 </script>
+
+
+
 
 <style scoped>
 /* Fondo global */
@@ -84,8 +153,8 @@ export default {
   height: 100vh;
   width: 100vw;
   display: flex;
-  justify-content: center; 
-  align-items: center; 
+  justify-content: center;
+  align-items: center;
   position: fixed;
   top: 0;
   left: 0;
@@ -97,81 +166,72 @@ export default {
   padding: 30px;
   border-radius: 12px;
   background: #f0f4ff;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); 
-  width: 100%; 
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
   text-align: center;
 }
 
-/* Título */
-.title {
-  font-size: 24px;
+/* Títulos */
+.title, h3 {
+  font-size: 20px;
   font-weight: bold;
   color: #3a3a3a;
-  margin-bottom: 20px;
-}
-
-/* Estilo de los grupos de formulario */
-.form-group {
-  margin-bottom: 15px;
-  text-align: left;
-}
-
-/* Estilo de las etiquetas */
-.input-label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #2c2c54;
+  margin-bottom: 10px;
 }
 
 /* Campos de entrada */
 input, select {
   width: 100%;
-  padding: 12px;
-  font-size: 16px;
-  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  border-radius: 6px;
   border: 1px solid #a8a8a8;
   background: #ffffff;
-  transition: border 0.3s;
 }
 
-input:focus, select:focus {
-  border-color: #5a67d8;
-  outline: none;
+.lyrics-textarea {
+  width: 100%;
+  height: 50px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 8px;
+  font-size: 14px;
+  background: #fff;
 }
 
 /* Botón principal */
 .primary-button {
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   background: linear-gradient(to right, #6a11cb, #2575fc);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 16px;
+  border-radius: 6px;
+  font-size: 14px;
   font-weight: bold;
   cursor: pointer;
-  margin-top: 15px;
-  transition: background 0.3s, transform 0.2s;
+  transition: background 0.3s;
 }
 
 .primary-button:hover {
   background: linear-gradient(to right, #580d99, #1e5bbf);
-  transform: scale(1.05);
 }
 
-/* Texto de carga */
-.loading-text {
+/* Botón secundario */
+.secondary-button {
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(to right, #ff7f50, #ff4500);
+  color: white;
+  border: none;
+  border-radius: 6px;
   font-size: 14px;
-  color: #ff9800;
-  margin-top: 15px;
-}
-
-/* ID de la tarea generada */
-.task-id {
-  font-size: 14px;
-  color: #2d9c5b;
   font-weight: bold;
-  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.secondary-button:hover {
+  background: linear-gradient(to right, #ff6347, #ff2200);
 }
 </style>
