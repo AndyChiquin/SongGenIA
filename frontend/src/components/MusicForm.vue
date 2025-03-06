@@ -27,9 +27,9 @@
       <div class="form-group">
         <label class="input-label">🎼 Género:</label>
         <select v-model="genre">
-          <option>Pasillo</option>
-          <option>Sanjuanito</option>
-          <option>Albazo</option>
+          <option>Bachata</option>
+          <option>Rock</option>
+          <option>Pop</option>
         </select>
       </div>
 
@@ -46,6 +46,9 @@
       <button @click="generarMusica" class="primary-button">
         🎤 Generar Canción
       </button>
+
+      <!-- Mensaje de espera -->
+      <p v-if="waitingForAudio">🎵 Esperando la canción... Esto puede tardar unos segundos.</p>
 
       <!-- Mostrar la URL cuando la música se genere -->
       <div class="lyrics-box">
@@ -69,7 +72,8 @@ export default {
       mood: "Alegre",
       loading: false,
       taskId: "", // Aquí guardamos el Task ID
-      audioUrl: "" // Aquí guardamos la URL
+      audioUrl: "", // Aquí guardamos la URL del audio
+      waitingForAudio: false // Indicador de espera para la URL
     };
   },
   methods: {
@@ -83,7 +87,7 @@ export default {
       const letra = await generateLyrics(this.fraseInicial);
 
       if (letra) {
-        this.lyrics = letra; // Asigna la letra generada
+        this.lyrics = letra; 
       } else {
         alert("Error al generar la letra.");
       }
@@ -98,43 +102,24 @@ export default {
       }
 
       this.loading = true;
+      this.waitingForAudio = true;
+
       const taskId = await generateMusic(this.lyrics, this.genre, this.mood);
 
       if (taskId) {
-        this.taskId = taskId; // Asigna correctamente el Task ID
+        this.taskId = taskId;  
         console.log("Task ID recibido:", this.taskId);
-        this.verificarAudio(); // Llama a la función para obtener la URL automáticamente
+
+        this.audioUrl = await getAudio(this.taskId); // Espera hasta obtener la URL
+        if (!this.audioUrl) {
+          alert("No se pudo obtener la URL del audio.");
+        }
       } else {
         alert("Error al generar la música.");
       }
 
       this.loading = false;
-    },
-
-    async verificarAudio() {
-      if (!this.taskId) {
-        alert("No se pudo obtener el Task ID.");
-        return;
-      }
-      
-      let intentos = 0;
-      const intervalo = setInterval(async () => {
-        console.log(`Intentando obtener audio con Task ID: ${this.taskId}`);
-
-        const response = await getAudio(this.taskId);
-
-        if (response && response.audio_links) {
-          this.audioUrl = response.audio_links[0].streamAudioUrl; // Asigna la URL del audio
-          console.log("Audio URL obtenida:", this.audioUrl);
-          clearInterval(intervalo);
-        }
-
-        intentos++;
-        if (intentos >= 10) {
-          clearInterval(intervalo);
-          alert("Tiempo de espera agotado, intenta nuevamente.");
-        }
-      }, 5000); // Revisar cada 5 segundos
+      this.waitingForAudio = false;
     }
   }
 };
