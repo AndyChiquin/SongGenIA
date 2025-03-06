@@ -6,7 +6,7 @@
       <!-- Entrada de frase inicial -->
       <div class="form-group">
         <label class="input-label">📝 Escribe una frase:</label>
-        <input v-model="fraseInicial" type="text" placeholder="Escribe aquí..." required>
+        <input v-model="fraseInicial" type="text" class="input-field" placeholder="Escribe aquí..." required>
       </div>
 
       <!-- Botón para generar la letra -->
@@ -14,28 +14,28 @@
         ✍️ Generar Letra
       </button>
 
-      <!-- Mensaje de carga -->
-      <p v-if="loading" class="loading-text">⌛ Procesando...</p>
+      <!-- Mensaje de carga para generar letra -->
+      <p v-if="loadingLetra" class="loading-text">⏳ Generando letra...</p>
 
-      <!-- Recuadro donde se muestra la letra generada -->
-      <div class="lyrics-box">
+      <!-- Sección de la letra generada -->
+      <div v-if="lyrics" class="lyrics-box">
         <h3>🎵 Letra Generada:</h3>
         <textarea v-model="lyrics" readonly class="lyrics-textarea"></textarea>
       </div>
 
       <!-- Opciones de género y estado de ánimo -->
-      <div class="form-group">
+      <div v-if="lyrics" class="form-group">
         <label class="input-label">🎼 Género:</label>
-        <select v-model="genre">
+        <select v-model="genre" class="input-field">
           <option>Bachata</option>
           <option>Rock</option>
           <option>Pop</option>
         </select>
       </div>
 
-      <div class="form-group">
+      <div v-if="lyrics" class="form-group">
         <label class="input-label">😊 Estado de ánimo:</label>
-        <select v-model="mood">
+        <select v-model="mood" class="input-field">
           <option>Alegre</option>
           <option>Triste</option>
           <option>Romántico</option>
@@ -43,19 +43,24 @@
       </div>
 
       <!-- Botón para generar la música -->
-      <button @click="generarMusica" class="primary-button">
+      <button v-if="lyrics" @click="generarMusica" class="primary-button">
         🎤 Generar Canción
       </button>
 
-      <!-- Mensaje de espera -->
-      <p v-if="waitingForAudio">🎵 Esperando la canción... Esto puede tardar unos segundos.</p>
+      <!-- Mensaje de espera al generar la canción -->
+      <p v-if="waitingForAudio" class="loading-text">🎵 Esperando la canción... Esto puede tardar unos segundos.</p>
 
       <!-- Mostrar la URL cuando la música se genere -->
-      <div class="lyrics-box">
+      <div v-if="audioUrl" class="lyrics-box">
         <h3>📢 Tu canción está lista 🎶</h3>
         <input v-model="audioUrl" readonly class="lyrics-textarea">
         <a v-if="audioUrl" :href="audioUrl" target="_blank" class="primary-button">🔗 Ir a la Canción</a>
       </div>
+
+      <!-- Botón de Nuevo Intento -->
+      <button v-if="lyrics || audioUrl" @click="resetForm" class="reset-button">
+        🔄 Nuevo Intento
+      </button>
     </div>
   </div>
 </template>
@@ -66,14 +71,15 @@ import { generateLyrics, generateMusic, getAudio } from "@/services/music";
 export default {
   data() {
     return {
-      fraseInicial: "", // Texto ingresado por el usuario
-      lyrics: "", // Letra generada
+      fraseInicial: "", 
+      lyrics: "", 
       genre: "Pasillo",
       mood: "Alegre",
+      loadingLetra: false, 
       loading: false,
-      taskId: "", // Aquí guardamos el Task ID
-      audioUrl: "", // Aquí guardamos la URL del audio
-      waitingForAudio: false // Indicador de espera para la URL
+      taskId: "",
+      audioUrl: "",
+      waitingForAudio: false 
     };
   },
   methods: {
@@ -83,16 +89,16 @@ export default {
         return;
       }
 
-      this.loading = true;
+      this.loadingLetra = true;
       const letra = await generateLyrics(this.fraseInicial);
 
       if (letra) {
-        this.lyrics = letra; 
+        this.lyrics = letra;
       } else {
         alert("Error al generar la letra.");
       }
 
-      this.loading = false;
+      this.loadingLetra = false;
     },
 
     async generarMusica() {
@@ -107,10 +113,10 @@ export default {
       const taskId = await generateMusic(this.lyrics, this.genre, this.mood);
 
       if (taskId) {
-        this.taskId = taskId;  
+        this.taskId = taskId;
         console.log("Task ID recibido:", this.taskId);
 
-        this.audioUrl = await getAudio(this.taskId); // Espera hasta obtener la URL
+        this.audioUrl = await getAudio(this.taskId);
         if (!this.audioUrl) {
           alert("No se pudo obtener la URL del audio.");
         }
@@ -119,6 +125,18 @@ export default {
       }
 
       this.loading = false;
+      this.waitingForAudio = false;
+    },
+
+    resetForm() {
+      this.fraseInicial = "";
+      this.lyrics = "";
+      this.genre = "Pasillo";
+      this.mood = "Alegre";
+      this.loadingLetra = false;
+      this.loading = false;
+      this.taskId = "";
+      this.audioUrl = "";
       this.waitingForAudio = false;
     }
   }
@@ -166,8 +184,8 @@ export default {
 }
 
 /* Campos de entrada */
-input, select {
-  width: 100%;
+.input-field {
+  width: 95%;
   padding: 10px;
   font-size: 14px;
   border-radius: 6px;
@@ -176,18 +194,25 @@ input, select {
 }
 
 .lyrics-textarea {
-  width: 100%;
-  height: 50px;
+  width: 95%;
+  height: 70px;
   border: 1px solid #ccc;
   border-radius: 5px;
   padding: 8px;
   font-size: 14px;
   background: #fff;
+  resize: none;
+  text-align: center;
+}
+
+/* Caja de letra generada */
+.lyrics-box {
+  margin-top: 15px;
 }
 
 /* Botón principal */
 .primary-button {
-  width: 100%;
+  width: 95%;
   padding: 10px;
   background: linear-gradient(to right, #6a11cb, #2575fc);
   color: white;
@@ -203,11 +228,11 @@ input, select {
   background: linear-gradient(to right, #580d99, #1e5bbf);
 }
 
-/* Botón secundario */
-.secondary-button {
-  width: 100%;
+/* Botón de reinicio */
+.reset-button {
+  width: 95%;
   padding: 10px;
-  background: linear-gradient(to right, #ff7f50, #ff4500);
+  background: linear-gradient(to right, #ff4b2b, #ff416c);
   color: white;
   border: none;
   border-radius: 6px;
@@ -215,9 +240,17 @@ input, select {
   font-weight: bold;
   cursor: pointer;
   transition: background 0.3s;
+  margin-top: 15px;
 }
 
-.secondary-button:hover {
-  background: linear-gradient(to right, #ff6347, #ff2200);
+.reset-button:hover {
+  background: linear-gradient(to right, #e62e00, #c90052);
+}
+
+/* Mensajes de carga */
+.loading-text {
+  font-size: 14px;
+  color: #6a11cb;
+  font-weight: bold;
 }
 </style>
