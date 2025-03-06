@@ -27,9 +27,9 @@
       <div class="form-group">
         <label class="input-label">🎼 Género:</label>
         <select v-model="genre">
-          <option>Bachata</option>
-          <option>Rock</option>
-          <option>Pop</option>
+          <option>Pasillo</option>
+          <option>Sanjuanito</option>
+          <option>Albazo</option>
         </select>
       </div>
 
@@ -69,7 +69,7 @@ export default {
       mood: "Alegre",
       loading: false,
       taskId: "", // Aquí guardamos el Task ID
-      audioUrl: ""
+      audioUrl: "" // Aquí guardamos la URL
     };
   },
   methods: {
@@ -92,24 +92,24 @@ export default {
     },
 
     async generarMusica() {
-  if (!this.lyrics) {
-    alert("Primero genera la letra.");
-    return;
-  }
+      if (!this.lyrics) {
+        alert("Primero genera la letra.");
+        return;
+      }
 
-  this.loading = true;
-  const taskId = await generateMusic(this.lyrics, this.genre, this.mood);
+      this.loading = true;
+      const taskId = await generateMusic(this.lyrics, this.genre, this.mood);
 
-  if (taskId) {
-    this.taskId = taskId;  // Asigna correctamente el Task ID
-    console.log("Task ID recibido:", this.taskId);
-    this.verificarAudio();
-  } else {
-    alert("Error al generar la música.");
-  }
+      if (taskId) {
+        this.taskId = taskId; // Asigna correctamente el Task ID
+        console.log("Task ID recibido:", this.taskId);
+        this.verificarAudio(); // Llama a la función para obtener la URL automáticamente
+      } else {
+        alert("Error al generar la música.");
+      }
 
-  this.loading = false;
-},
+      this.loading = false;
+    },
 
     async verificarAudio() {
       if (!this.taskId) {
@@ -121,11 +121,11 @@ export default {
       const intervalo = setInterval(async () => {
         console.log(`Intentando obtener audio con Task ID: ${this.taskId}`);
 
-        const audioUrl = await getAudio(this.taskId);
+        const response = await getAudio(this.taskId);
 
-        if (audioUrl) {
-          this.audioUrl = audioUrl;
-          console.log("Audio URL obtenida:", audioUrl);
+        if (response && response.audio_links) {
+          this.audioUrl = response.audio_links[0].streamAudioUrl; // Asigna la URL del audio
+          console.log("Audio URL obtenida:", this.audioUrl);
           clearInterval(intervalo);
         }
 
@@ -139,6 +139,7 @@ export default {
   }
 };
 </script>
+
 
 
 
